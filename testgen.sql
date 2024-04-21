@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Czas generowania: 17 Kwi 2024, 22:38
+-- Czas generowania: 21 Kwi 2024, 23:33
 -- Wersja serwera: 10.4.27-MariaDB
 -- Wersja PHP: 8.2.0
 
@@ -30,18 +30,9 @@ SET time_zone = "+00:00";
 CREATE TABLE `answers` (
   `id` int(11) NOT NULL,
   `questionID` int(11) NOT NULL,
-  `answerCorrect` varchar(32) DEFAULT NULL,
-  `answerWrong1` varchar(32) DEFAULT NULL,
-  `answerWrong2` varchar(32) DEFAULT NULL,
-  `answerWrong3` varchar(32) DEFAULT NULL
+  `answer` varchar(32) DEFAULT NULL,
+  `isCorrect` tinyint(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Zrzut danych tabeli `answers`
---
-
-INSERT INTO `answers` (`id`, `questionID`, `answerCorrect`, `answerWrong1`, `answerWrong2`, `answerWrong3`) VALUES
-(1, 1, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -60,14 +51,19 @@ CREATE TABLE `questions` (
   `difficulty` tinyint(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- Zrzut danych tabeli `questions`
+-- Struktura tabeli dla tabeli `results`
 --
 
-INSERT INTO `questions` (`id`, `question`, `createdAt`, `modifiedAt`, `addedByID`, `answerID`, `testID`, `difficulty`) VALUES
-(1, 'how much is 2 + 2', '2024-03-06', '2024-03-06', NULL, 1, NULL, 0),
-(2, 'how much is 2 + 3', '2024-03-06', '2024-03-06', NULL, 1, NULL, 0),
-(3, 'how much is 2 + 4', '2024-03-06', '2024-03-06', NULL, 1, NULL, 0);
+CREATE TABLE `results` (
+  `id` int(11) NOT NULL,
+  `result` int(11) DEFAULT NULL,
+  `completionDate` date DEFAULT current_timestamp(),
+  `userID` int(11) NOT NULL,
+  `testID` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -81,6 +77,19 @@ CREATE TABLE `tests` (
   `subject` varchar(16) NOT NULL,
   `topic` varchar(24) DEFAULT NULL,
   `creatorID` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabeli dla tabeli `useranswers`
+--
+
+CREATE TABLE `useranswers` (
+  `id` int(11) NOT NULL,
+  `isCorrect` tinyint(1) DEFAULT 0,
+  `questionID` int(11) NOT NULL,
+  `userID` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -117,11 +126,27 @@ ALTER TABLE `questions`
   ADD KEY `testID` (`testID`);
 
 --
+-- Indeksy dla tabeli `results`
+--
+ALTER TABLE `results`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `userID` (`userID`),
+  ADD KEY `testID` (`testID`);
+
+--
 -- Indeksy dla tabeli `tests`
 --
 ALTER TABLE `tests`
   ADD PRIMARY KEY (`id`),
   ADD KEY `creatorID` (`creatorID`);
+
+--
+-- Indeksy dla tabeli `useranswers`
+--
+ALTER TABLE `useranswers`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `questionID` (`questionID`),
+  ADD KEY `userID` (`userID`);
 
 --
 -- Indeksy dla tabeli `users`
@@ -146,9 +171,21 @@ ALTER TABLE `questions`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT dla tabeli `results`
+--
+ALTER TABLE `results`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT dla tabeli `tests`
 --
 ALTER TABLE `tests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT dla tabeli `useranswers`
+--
+ALTER TABLE `useranswers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -176,10 +213,24 @@ ALTER TABLE `questions`
   ADD CONSTRAINT `questions_ibfk_3` FOREIGN KEY (`testID`) REFERENCES `tests` (`id`);
 
 --
+-- Ograniczenia dla tabeli `results`
+--
+ALTER TABLE `results`
+  ADD CONSTRAINT `results_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `results_ibfk_2` FOREIGN KEY (`testID`) REFERENCES `tests` (`id`);
+
+--
 -- Ograniczenia dla tabeli `tests`
 --
 ALTER TABLE `tests`
   ADD CONSTRAINT `tests_ibfk_1` FOREIGN KEY (`creatorID`) REFERENCES `users` (`id`);
+
+--
+-- Ograniczenia dla tabeli `useranswers`
+--
+ALTER TABLE `useranswers`
+  ADD CONSTRAINT `useranswers_ibfk_1` FOREIGN KEY (`questionID`) REFERENCES `questions` (`id`),
+  ADD CONSTRAINT `useranswers_ibfk_2` FOREIGN KEY (`userID`) REFERENCES `users` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
